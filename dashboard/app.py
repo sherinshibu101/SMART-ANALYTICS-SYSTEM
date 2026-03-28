@@ -19,7 +19,22 @@ st.markdown("Real-time energy consumption monitoring and anomaly detection")
 
 # Sidebar Configuration
 st.sidebar.header("Configuration")
-api_url = st.sidebar.text_input("API URL", value="http://localhost:8000")
+
+# Persist API URL across refreshes using session state + query params
+query_api_url = st.query_params.get("api_url", "")
+if isinstance(query_api_url, list):
+    query_api_url = query_api_url[0] if query_api_url else ""
+
+default_api_url = query_api_url or "http://localhost:8000"
+if "api_url" not in st.session_state:
+    st.session_state.api_url = default_api_url
+
+st.sidebar.text_input("API URL", key="api_url")
+api_url = st.session_state.api_url.strip().rstrip("/")
+
+if api_url:
+    st.query_params["api_url"] = api_url
+
 household_id = st.sidebar.selectbox(
     "Select Household",
     [f"household_{i}" for i in range(1, 6)]
@@ -29,14 +44,14 @@ hours = st.sidebar.slider("Data Range (hours)", 1, 168, 24)
 # API Functions
 def fetch_health():
     try:
-        response = requests.get(f"{api_url}/health")
+        response = requests.get(f"{api_url}/health", timeout=10)
         return response.status_code == 200
     except:
         return False
 
 def fetch_readings(household_id, hours=24):
     try:
-        response = requests.get(f"{api_url}/readings/{household_id}", params={"hours": hours})
+        response = requests.get(f"{api_url}/readings/{household_id}", params={"hours": hours}, timeout=15)
         if response.status_code == 200:
             return response.json().get("readings", [])
         return []
@@ -45,7 +60,7 @@ def fetch_readings(household_id, hours=24):
 
 def fetch_daily_consumption(household_id):
     try:
-        response = requests.get(f"{api_url}/analytics/daily/{household_id}")
+        response = requests.get(f"{api_url}/analytics/daily/{household_id}", timeout=15)
         if response.status_code == 200:
             return response.json().get("daily_consumption", [])
         return []
@@ -54,7 +69,7 @@ def fetch_daily_consumption(household_id):
 
 def fetch_peak_hours(household_id):
     try:
-        response = requests.get(f"{api_url}/analytics/peak-hours/{household_id}")
+        response = requests.get(f"{api_url}/analytics/peak-hours/{household_id}", timeout=15)
         if response.status_code == 200:
             return response.json().get("peak_hours", [])
         return []
@@ -63,7 +78,7 @@ def fetch_peak_hours(household_id):
 
 def fetch_alerts(household_id, hours=24):
     try:
-        response = requests.get(f"{api_url}/alerts/{household_id}", params={"hours": hours})
+        response = requests.get(f"{api_url}/alerts/{household_id}", params={"hours": hours}, timeout=15)
         if response.status_code == 200:
             return response.json().get("alerts", [])
         return []
