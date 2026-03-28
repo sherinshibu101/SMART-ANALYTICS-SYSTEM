@@ -4,6 +4,7 @@ import plotly.express as px
 import pandas as pd
 import requests
 import os
+import time
 from datetime import datetime, timedelta
 
 # Page Configuration
@@ -46,11 +47,16 @@ hours = st.sidebar.slider("Data Range (hours)", 1, 168, 24)
 
 # API Functions
 def fetch_health():
-    try:
-        response = requests.get(f"{api_url}/health", timeout=10)
-        return response.status_code == 200
-    except:
-        return False
+    # Render free tier can take time to wake up after inactivity.
+    for _ in range(3):
+        try:
+            response = requests.get(f"{api_url}/health", timeout=25)
+            if response.status_code == 200:
+                return True
+        except requests.RequestException:
+            pass
+        time.sleep(2)
+    return False
 
 def fetch_readings(household_id, hours=24):
     try:
@@ -91,7 +97,7 @@ def fetch_alerts(household_id, hours=24):
 # Check API Health
 if not fetch_health():
     st.error(f"⚠️ Cannot connect to API at {api_url}")
-    st.info("Make sure the FastAPI backend is running: `python -m uvicorn backend.main:app --reload`")
+    st.info("If you are on Render free tier, the backend may be waking up. Wait 30-60 seconds and refresh.")
 else:
     st.success(f"✓ Connected to API")
 
