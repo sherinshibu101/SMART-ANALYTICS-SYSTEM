@@ -3,6 +3,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
 import requests
+import os
 from datetime import datetime, timedelta
 
 # Page Configuration
@@ -25,7 +26,9 @@ query_api_url = st.query_params.get("api_url", "")
 if isinstance(query_api_url, list):
     query_api_url = query_api_url[0] if query_api_url else ""
 
-default_api_url = query_api_url or "http://localhost:8000"
+secrets_api_url = st.secrets.get("API_URL", "") if hasattr(st, "secrets") else ""
+env_api_url = os.getenv("API_URL", "")
+default_api_url = query_api_url or secrets_api_url or env_api_url or "http://localhost:8000"
 if "api_url" not in st.session_state:
     st.session_state.api_url = default_api_url
 
