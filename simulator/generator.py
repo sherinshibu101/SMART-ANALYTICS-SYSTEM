@@ -106,7 +106,7 @@ class EnergyDataSimulator:
                 for alert in alerts:
                     self.write_api.write(bucket=INFLUXDB_BUCKET, record=alert)
             except Exception as e:
-                print(f"⚠️ Error writing alerts: {e}")
+                print(f"Warning: Error writing alerts: {e}")
     
     def generate_reading(self, household_id: str, hour: int):
         """Generate a single realistic reading"""
@@ -185,10 +185,10 @@ class EnergyDataSimulator:
         
         try:
             self.write_api.write(bucket=INFLUXDB_BUCKET, record=points)
-            print(f"✓ Successfully ingested {len(points)} readings")
+            print(f"Success: Ingested {len(points)} readings")
             return True
         except Exception as e:
-            print(f"✗ Error ingesting readings: {e}")
+            print(f"Error ingesting readings: {e}")
             return False
     
     def close(self):
@@ -197,7 +197,7 @@ class EnergyDataSimulator:
 
 if __name__ == "__main__":
     simulator = EnergyDataSimulator()
-    print("🔌 Starting energy data simulator...")
+    print("Starting energy data simulator...")
     simulator.ingest_batch(num_readings=10)
     simulator.close()
-    print("✓ Simulation complete!")
+    print("Simulation complete!")
